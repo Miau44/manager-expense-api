@@ -19,7 +19,10 @@ const sequelize = new Sequelize(database, user, password, {
 export const connectMysql = async () => {
     try {
         await sequelize.authenticate();
-        await sequelize.sync({ alter: true });
+        // Creates missing tables only; additive schema changes use explicit migrations.
+        await sequelize.sync();
+        const { up } = await import("./migrations/001-taller8.js");
+        await up();
         console.log("Connected to MySQL");
     } catch (error) {
         console.error("Error connecting to MySQL:", error);
