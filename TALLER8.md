@@ -10,6 +10,15 @@ Esta API de gestión de gastos usa Express y aplica Clean Architecture: rutas y 
 - MySQL 8 compatible con InnoDB y MongoDB.
 - Copiar `envexample` a `.env` y completar `JWT_SECRET`, `MONGO_URI`, `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD` y `MYSQL_DB`. El `.env` local no se versiona. No se incluyen credenciales en este repositorio.
 - El registro público crea usuarios con rol `user`. Para habilitar el bonus, asigne `role: "admin"` a una cuenta confiable desde el entorno administrativo de MongoDB.
+- En esta computadora, MySQL 8.4.3 de Laragon usa `localhost:3306`; MongoDB Community 8.0.30 se instaló en el perfil local y escucha solo en `127.0.0.1:27017`. MongoDB se ejecuta como proceso de usuario, no como servicio de Windows. Para iniciarlo después de reiniciar:
+
+```powershell
+$root = Join-Path $env:LOCALAPPDATA 'manager-expense-api'
+$bin = Join-Path $root 'mongodb-server-8.0.30\mongodb-win32-x86_64-windows-8.0.30\bin\mongod.exe'
+$data = Join-Path $root 'mongo-data'
+$log = Join-Path $root 'mongod.log'
+Start-Process -FilePath $bin -ArgumentList @('--dbpath', $data, '--bind_ip', '127.0.0.1', '--port', '27017', '--logpath', $log, '--logappend') -WindowStyle Hidden
+```
 
 Instalar y ejecutar:
 
@@ -78,23 +87,32 @@ Los controladores traducen HTTP, los casos de uso validan reglas del negocio y l
 
 ## Pruebas y Postman
 
-Ejecutar `npm test`. En esta entrega se ejecutaron 7 pruebas y las 7 pasaron. Cubren propiedad y validación de wallet, bloqueo de borrado si hay referencias, payload transaccional anterior sin wallet, wallet válida/inexistente/de otro usuario, privacidad del recibo y cadena HTTP de autenticación/rol (401, 403, admin). Son pruebas unitarias con repositorios sustitutos; no prueban conexión real, migración SQL ni operación contra Mongo/MySQL, que requieren servicios disponibles y credenciales.
+Ejecutar `npm test` para las pruebas unitarias. En la verificación final, las 7 pruebas pasaron. Para probar endpoints reales, iniciar primero el servidor con `npm run dev` y luego ejecutar `npm run test:integration`. Ese verificador solo admite `localhost`/`127.0.0.1` y la base `bd_gastos`; genera credenciales temporales, crea un admin directamente en la base local (sin exponer una ruta pública), comprueba MySQL/MongoDB, guarda el resultado sin tokens ni contraseñas en `docs/evidencias/verificacion-local.json` y limpia las cuentas/filas temporales que él mismo creó. Si un correo de prueba ya existe, se detiene sin borrarlo.
+
+Resultado real de esta ejecución: MySQL 8.4.3 y MongoDB 8.0.30 conectados; `npm run migrate` completó; 31 verificaciones HTTP pasaron. Incluyeron `health` y Swagger (200), wallets (201/200/403/409), transacciones (201/400/200), recibos (200/403/404), protección JWT (401/200) y monedas (401 sin token, 403 user, 201 admin). Se observaron 2 wallets y 3 transacciones persistidas en MySQL antes de limpiar datos de prueba; la moneda temporal se encontró en MongoDB y luego se retiró. La relación `walletId` es nullable, `isPrivate` es `NOT NULL DEFAULT 1` y la FK tiene `ON DELETE RESTRICT`.
 
 Importe `docs/postman/Taller8.postman_collection.json` en Postman. Defina `baseUrl` como `http://localhost:3000`, ejecute registro/login y copie `token`; utilice el endpoint de categorías para obtener `categoryId`. Para probar rol admin, use la cuenta preconfigurada en MongoDB. Cree wallet, cree transacción pública con su id, pruebe recibo sin token, y cree otra transacción privada para verificar `403`. La colección guarda ids de respuesta cuando están disponibles.
 
 Endpoints base adicionales: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET/POST /api/v1/transactions`, `PUT/DELETE /api/v1/transactions/:id`, `GET/POST /api/v1/currencies` y `GET /api/v1/categories`.
 
-## Evidencias y límites del entorno
+## Evidencias y estado de base de datos
 
-La evidencia verificable se genera al ejecutar `npm test` y está recogida en el informe de entrega. La migración solo debe correr contra la base local de desarrollo configurada. En el entorno de preparación no se proporcionaron claves de conexión ni servicios de base identificados; por tanto, no se ejecutó una migración ni se afirmó que el servidor conectara.
+- [Informe JSON de la prueba HTTP y persistencia](docs/evidencias/verificacion-local.json): versiones, estado de cada solicitud, esquema y claves de respuesta permitidas; no incluye JWT, contraseñas, emails ni identificadores de usuarios.
+- `docs/evidencias/verificacion-local.json` se genera con `npm run test:integration`.
+- MySQL: se creó `bd_gastos` porque no existía; estaba vacía antes de la inicialización. La migración se ejecutó al iniciar la API y nuevamente con `npm run migrate`, comprobando que fuera idempotente. No se eliminaron ni modificaron otras bases de Laragon.
+- MongoDB corre localmente enlazado solo a loopback, con datos en `%LOCALAPPDATA%\manager-expense-api\mongo-data`; no se configuró como servicio global ni se usó un servicio de pago.
+- Las pruebas de integración limpian únicamente los usuarios y filas temporales que generan. Las categorías y monedas semilla se mantienen para ejecutar la aplicación.
 
 ## Guion corto para la defensa
 
-1. Mostrar que las wallets se guardan en MySQL con `userId` tomado del JWT.
-2. Crear transacción sin wallet y luego con wallet; intentar asociar wallet ajena para demostrar validación de propiedad.
-3. Abrir comprobante público sin token y comparar con un recibo privado (403); señalar que la migración protege datos antiguos con `isPrivate=true`.
-4. Intentar registrar moneda sin token (401), como `user` (403) y como `admin` (201).
-5. Explicar que rutas/controladores, casos de uso, entidades y repositorios mantienen responsabilidades separadas.
+1. Ejecutar `npm run dev`, mostrar health/Swagger y enseñar en el informe que ambas bases conectan.
+2. Mostrar que las wallets se guardan en MySQL con `userId` tomado del JWT.
+3. Crear transacción sin wallet y luego con wallet; intentar asociar wallet ajena para demostrar validación de propiedad.
+4. Abrir comprobante público sin token y comparar con un recibo privado (403); señalar que la migración protege datos antiguos con `isPrivate=true`.
+5. Intentar registrar moneda sin token (401), como `user` (403) y como `admin` (201).
+6. Explicar que rutas/controladores, casos de uso, entidades y repositorios mantienen responsabilidades separadas.
+
+Historial de desarrollo: `d097c16` wallets, `0e0da9d` transacciones y comprobantes, `d429d73` autorización, `afac6fa` documentación/colección/tests y `d6992c5` casos adicionales de tests. Las pruebas de integración y el informe local se añaden después de esos commits.
 
 ## Preguntas posibles
 

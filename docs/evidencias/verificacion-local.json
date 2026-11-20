@@ -1,0 +1,69 @@
+{
+  "passed": true,
+  "statuses": {
+    "health": 200,
+    "swagger": 200,
+    "register_user": 201,
+    "register_second_user": 201,
+    "login_user": 200,
+    "login_second_user": 200,
+    "login_admin": 200,
+    "wallet_create": 201,
+    "wallet_list_owner": 200,
+    "wallet_list_other_user": 200,
+    "wallet_delete_other_owner": 403,
+    "transaction_without_wallet": 201,
+    "transaction_with_wallet": 201,
+    "private_transaction": 201,
+    "transaction_nonexistent_wallet": 400,
+    "second_wallet_create": 201,
+    "transaction_foreign_wallet": 400,
+    "transaction_update_wallet": 200,
+    "transaction_detach_wallet": 200,
+    "public_receipt": 200,
+    "private_receipt": 403,
+    "missing_receipt": 404,
+    "private_transactions_without_jwt": 401,
+    "private_transactions_with_jwt": 200,
+    "currency_without_token": 401,
+    "currency_as_user": 403,
+    "currency_as_admin": 201,
+    "wallet_delete_with_transaction": 409,
+    "unused_wallet_create": 201,
+    "wallet_delete_owner": 200
+  },
+  "mysqlVersion": "8.4.3",
+  "mongoVersion": "8.0.30",
+  "database": "bd_gastos",
+  "persistedRowsBeforeCleanup": {
+    "wallets": 2,
+    "transactions": 3
+  },
+  "migrationColumns": [
+    {
+      "COLUMN_NAME": "isPrivate",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "1"
+    },
+    {
+      "COLUMN_NAME": "walletId",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null
+    }
+  ],
+  "walletForeignKeyDeleteRule": "RESTRICT",
+  "publicReceiptKeys": [
+    "amount",
+    "categoryId",
+    "convertedAmount",
+    "currency",
+    "date",
+    "description",
+    "id",
+    "type",
+    "walletId"
+  ],
+  "registrationRoleEscalationPrevented": true,
+  "recordedAt": "2026-11-20T01:23:20.089Z",
+  "temporaryRecordsCleaned": true
+}

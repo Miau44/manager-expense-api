@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "test": "node --test",
-    "migrate": "node src/infrastructure/database/mysql/migrations/001-taller8.js"
+    "migrate": "node src/infrastructure/database/mysql/migrations/001-taller8.js",
+    "test:integration": "node scripts/verify-taller8-live.js"
   },
   "keywords": [],
   "type": "module",
