@@ -188,7 +188,7 @@ try {
     await expect("wallet_delete_owner", await call(`/api/v1/wallets/${unusedWallet.id}`, { method: "DELETE", token: userToken }), 200);
 
     report = {
-        passed: true, statuses, mysqlVersion: mysqlVersion[0].version,
+        passed: true, httpChecks: Object.keys(statuses).length, statuses, mysqlVersion: mysqlVersion[0].version,
         mongoVersion: mongoVersion.version, database: "bd_gastos",
         persistedRowsBeforeCleanup: persisted[0], migrationColumns: schema,
         walletForeignKeyDeleteRule: fk[0].DELETE_RULE,

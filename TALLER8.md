@@ -89,7 +89,7 @@ Los controladores traducen HTTP, los casos de uso validan reglas del negocio y l
 
 Ejecutar `npm test` para las pruebas unitarias. En la verificación final, las 7 pruebas pasaron. Para probar endpoints reales, iniciar primero el servidor con `npm run dev` y luego ejecutar `npm run test:integration`. Ese verificador solo admite `localhost`/`127.0.0.1` y la base `bd_gastos`; genera credenciales temporales, crea un admin directamente en la base local (sin exponer una ruta pública), comprueba MySQL/MongoDB, guarda el resultado sin tokens ni contraseñas en `docs/evidencias/verificacion-local.json` y limpia las cuentas/filas temporales que él mismo creó. Si un correo de prueba ya existe, se detiene sin borrarlo.
 
-Resultado real de esta ejecución: MySQL 8.4.3 y MongoDB 8.0.30 conectados; `npm run migrate` completó; 31 verificaciones HTTP pasaron. Incluyeron `health` y Swagger (200), wallets (201/200/403/409), transacciones (201/400/200), recibos (200/403/404), protección JWT (401/200) y monedas (401 sin token, 403 user, 201 admin). Se observaron 2 wallets y 3 transacciones persistidas en MySQL antes de limpiar datos de prueba; la moneda temporal se encontró en MongoDB y luego se retiró. La relación `walletId` es nullable, `isPrivate` es `NOT NULL DEFAULT 1` y la FK tiene `ON DELETE RESTRICT`.
+Resultado real de esta ejecución: MySQL 8.4.3 y MongoDB 8.0.30 conectados; `npm run migrate` completó; 30 verificaciones HTTP pasaron. Incluyeron `health` y Swagger (200), wallets (201/200/403/409), transacciones (201/400/200), recibos (200/403/404), protección JWT (401/200) y monedas (401 sin token, 403 user, 201 admin). Se observaron 2 wallets y 3 transacciones persistidas en MySQL antes de limpiar datos de prueba; la moneda temporal se encontró en MongoDB y luego se retiró. La relación `walletId` es nullable, `isPrivate` es `NOT NULL DEFAULT 1` y la FK tiene `ON DELETE RESTRICT`.
 
 Importe `docs/postman/Taller8.postman_collection.json` en Postman. Defina `baseUrl` como `http://localhost:3000`, ejecute registro/login y copie `token`; utilice el endpoint de categorías para obtener `categoryId`. Para probar rol admin, use la cuenta preconfigurada en MongoDB. Cree wallet, cree transacción pública con su id, pruebe recibo sin token, y cree otra transacción privada para verificar `403`. La colección guarda ids de respuesta cuando están disponibles.
 
@@ -112,7 +112,7 @@ Endpoints base adicionales: `POST /api/v1/auth/register`, `POST /api/v1/auth/log
 5. Intentar registrar moneda sin token (401), como `user` (403) y como `admin` (201).
 6. Explicar que rutas/controladores, casos de uso, entidades y repositorios mantienen responsabilidades separadas.
 
-Historial de desarrollo: `d097c16` wallets, `0e0da9d` transacciones y comprobantes, `d429d73` autorización, `afac6fa` documentación/colección/tests y `d6992c5` casos adicionales de tests. Las pruebas de integración y el informe local se añaden después de esos commits.
+Historial de desarrollo: `d097c16` wallets, `0e0da9d` transacciones y comprobantes, `d429d73` autorización, `afac6fa` documentación/colección/tests, `d6992c5` casos adicionales de tests y `88c56bf` verificación de integración y evidencia local.
 
 ## Preguntas posibles
 

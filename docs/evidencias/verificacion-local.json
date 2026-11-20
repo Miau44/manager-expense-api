@@ -1,5 +1,6 @@
 {
   "passed": true,
+  "httpChecks": 30,
   "statuses": {
     "health": 200,
     "swagger": 200,
@@ -64,6 +65,6 @@
     "walletId"
   ],
   "registrationRoleEscalationPrevented": true,
-  "recordedAt": "2026-11-20T01:23:20.089Z",
+  "recordedAt": "2026-11-20T01:29:20.513Z",
   "temporaryRecordsCleaned": true
 }
