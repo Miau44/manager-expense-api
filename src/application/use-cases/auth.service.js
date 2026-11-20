@@ -20,7 +20,8 @@ export default class AuthService {
         }
 
         data.password = await HashService.hash(data.password);
-        const newUser = new UserEntity(data);
+        // Public registration must never allow privilege escalation through a submitted role.
+        const newUser = new UserEntity({ ...data, role: "user" });
         const savedUser = await this.userRepository.save(newUser);
 
         if (this.auditRepository && savedUser) {
