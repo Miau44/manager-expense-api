@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test",
+    "migrate": "node src/infrastructure/database/mysql/migrations/001-taller8.js"
   },
   "keywords": [],
   "type": "module",

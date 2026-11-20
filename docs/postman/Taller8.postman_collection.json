@@ -1,0 +1,28 @@
+{
+  "info": {
+    "_postman_id": "d92461fb-1945-4ddd-bf95-8312a8f97108",
+    "name": "Taller 8 - Manager Expense API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "walletId", "value": "1" },
+    { "key": "categoryId", "value": "3" },
+    { "key": "transactionId", "value": "1" }
+  ],
+  "item": [
+    { "name": "Health", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/health" } },
+    { "name": "Register user", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Estudiante\",\n  \"email\": \"estudiante@example.com\",\n  \"password\": \"cambiar123\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/register" } },
+    { "name": "Login user", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('token', pm.response.json().token);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"estudiante@example.com\",\n  \"password\": \"cambiar123\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/login" } },
+    { "name": "List categories", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/v1/categories" } },
+    { "name": "Create wallet", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('walletId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Efectivo\",\n  \"type\": \"CASH\",\n  \"currency\": \"BOB\"\n}" }, "url": "{{baseUrl}}/api/v1/wallets" } },
+    { "name": "List wallets", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/v1/wallets" } },
+    { "name": "Create public transaction with wallet", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('transactionId', pm.response.json().id);"] } }], "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"type\": \"EXPENSE\",\n  \"amount\": 25,\n  \"currency\": \"BOB\",\n  \"date\": \"2026-11-19\",\n  \"categoryId\": {{categoryId}},\n  \"walletId\": {{walletId}},\n  \"isPrivate\": false,\n  \"description\": \"Compra de prueba\"\n}" }, "url": "{{baseUrl}}/api/v1/transactions" } },
+    { "name": "Public receipt (no JWT)", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/transactions/{{transactionId}}/public" } },
+    { "name": "Private transactions (JWT required)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/v1/transactions" } },
+    { "name": "Create currency rate (admin only)", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"code\": \"USD\",\n  \"name\": \"Dólar estadounidense\",\n  \"symbol\": \"$\",\n  \"exchangeRate\": 6.96,\n  \"date\": \"2026-11-19\"\n}" }, "url": "{{baseUrl}}/api/v1/currencies" } },
+    { "name": "Delete wallet", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/v1/wallets/{{walletId}}" } }
+  ]
+}
