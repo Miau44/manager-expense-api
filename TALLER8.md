@@ -78,7 +78,7 @@ Los controladores traducen HTTP, los casos de uso validan reglas del negocio y l
 
 ## Pruebas y Postman
 
-Ejecutar `npm test`. En esta entrega se ejecutaron 6 pruebas y las 6 pasaron. Cubren propiedad y validación de wallet, payload transaccional anterior sin wallet, wallet válida/inexistente/de otro usuario, privacidad del recibo y middleware de autenticación/rol. Son pruebas unitarias con repositorios sustitutos; no prueban conexión real, migración SQL ni operación contra Mongo/MySQL, que requieren servicios disponibles y credenciales.
+Ejecutar `npm test`. En esta entrega se ejecutaron 7 pruebas y las 7 pasaron. Cubren propiedad y validación de wallet, bloqueo de borrado si hay referencias, payload transaccional anterior sin wallet, wallet válida/inexistente/de otro usuario, privacidad del recibo y cadena HTTP de autenticación/rol (401, 403, admin). Son pruebas unitarias con repositorios sustitutos; no prueban conexión real, migración SQL ni operación contra Mongo/MySQL, que requieren servicios disponibles y credenciales.
 
 Importe `docs/postman/Taller8.postman_collection.json` en Postman. Defina `baseUrl` como `http://localhost:3000`, ejecute registro/login y copie `token`; utilice el endpoint de categorías para obtener `categoryId`. Para probar rol admin, use la cuenta preconfigurada en MongoDB. Cree wallet, cree transacción pública con su id, pruebe recibo sin token, y cree otra transacción privada para verificar `403`. La colección guarda ids de respuesta cuando están disponibles.
 

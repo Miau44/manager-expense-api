@@ -4,13 +4,15 @@ import WalletService from "../src/application/use-cases/wallet.service.js";
 import TransactionService from "../src/application/use-cases/transaction.service.js";
 import { roleMiddleware } from "../src/presentation/middlewares/role.middleware.js";
 import { authMiddleware } from "../src/presentation/middlewares/auth.middleware.js";
+import JwtService from "../src/infrastructure/security/jwt.service.js";
 
 const walletRows = new Map();
+let referencedTransactions = 0;
 const walletRepository = {
     async save(wallet) { const row = { ...wallet, id: walletRows.size + 1 }; walletRows.set(row.id, row); return row; },
     async findByUserId(userId) { return [...walletRows.values()].filter((w) => w.userId === userId); },
     async findById(id) { return walletRows.get(Number(id)) || null; },
-    async countTransactions() { return 0; },
+    async countTransactions() { return referencedTransactions; },
     async delete(id) { walletRows.delete(Number(id)); }
 };
 
@@ -24,6 +26,16 @@ test("wallets are validated, scoped to owner, and deletable only by owner", asyn
     await service.delete(wallet.id, "alice");
     assert.equal(walletRows.size, 0);
     await assert.rejects(() => service.create({ name: " " }, "alice"), /Name is required/);
+});
+
+test("a wallet referenced by transactions cannot be deleted", async () => {
+    walletRows.clear();
+    referencedTransactions = 1;
+    const service = new WalletService(walletRepository);
+    const wallet = await service.create({ name: "Cuenta vinculada" }, "alice");
+    await assert.rejects(() => service.delete(wallet.id, "alice"), /cannot be deleted/);
+    assert.equal(walletRows.has(wallet.id), true);
+    referencedTransactions = 0;
 });
 
 function transactionService({ transaction, walletById = new Map() }) {
@@ -74,16 +86,18 @@ test("public receipt hides private transactions and only returns permitted field
     assert.equal("token" in receipt, false);
 });
 
-test("role middleware distinguishes unauthenticated, user, and admin", () => {
-    const run = (user) => {
+test("currency write middleware chain returns 401, 403, and admits admin", () => {
+    process.env.JWT_SECRET = "test-only-secret";
+    const run = (token) => {
         let status; let passed = false;
         const res = { status(code) { status = code; return this; }, json(body) { this.body = body; return this; } };
-        roleMiddleware(["admin"])({ user }, res, () => { passed = true; });
+        const req = { headers: token ? { authorization: `Bearer ${token}` } : {} };
+        authMiddleware(req, res, () => roleMiddleware(["admin"])(req, res, () => { passed = true; }));
         return { status, passed };
     };
-    assert.deepEqual(run(undefined), { status: 403, passed: false });
-    assert.deepEqual(run({ role: "user" }), { status: 403, passed: false });
-    assert.deepEqual(run({ role: "admin" }), { status: undefined, passed: true });
+    assert.deepEqual(run(undefined), { status: 401, passed: false });
+    assert.deepEqual(run(JwtService.generateToken({ id: "user-1", role: "user" })), { status: 403, passed: false });
+    assert.deepEqual(run(JwtService.generateToken({ id: "admin-1", role: "admin" })), { status: undefined, passed: true });
 });
 
 test("private route authentication returns 401 when token is absent", () => {
