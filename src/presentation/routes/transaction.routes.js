@@ -6,6 +6,7 @@ import CurrencyMongoRepository from "../../infrastructure/database/mongo/currenc
 import CategoryMySQLRepository from "../../infrastructure/database/mysql/category.mysql.repository.js";
 import BudgetMySQLRepository from "../../infrastructure/database/mysql/budget.mysql.repository.js";
 import AuditMySQLRepository from "../../infrastructure/database/mysql/audit.mysql.repository.js";
+import WalletMySQLRepository from "../../infrastructure/database/mysql/wallet.mysql.repository.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 // Inyección de dependencias
@@ -14,17 +15,21 @@ const currencyRepository = new CurrencyMongoRepository();
 const categoryRepository = new CategoryMySQLRepository();
 const budgetRepository = new BudgetMySQLRepository();
 const auditRepository = new AuditMySQLRepository();
+const walletRepository = new WalletMySQLRepository();
 
 const transactionService = new TransactionService(
     transactionRepository,
     currencyRepository,
     categoryRepository,
     budgetRepository,
-    auditRepository
+    auditRepository,
+    walletRepository
 );
 const transactionController = new TransactionController(transactionService);
 
 const router = Router();
+
+router.get("/:id/public", transactionController.getPublicReceipt);
 
 /**
  * @swagger
@@ -61,6 +66,13 @@ const router = Router();
  *               categoryId:
  *                 type: integer
  *                 example: 3
+ *               walletId:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 1
+ *               isPrivate:
+ *                 type: boolean
+ *                 default: true
  *     responses:
  *       201:
  *         description: Transacción creada y convertida con el tipo de cambio del día

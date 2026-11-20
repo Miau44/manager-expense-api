@@ -1,5 +1,6 @@
 import { DataTypes, Op, fn, col } from "sequelize";
 import sequelize from "./connection.js";
+import { WalletModel } from "./wallet.mysql.repository.js";
 
 export const TransactionModel = sequelize.define("Transaction", {
     type: { type: DataTypes.ENUM("INCOME", "EXPENSE"), allowNull: false },
@@ -12,8 +13,12 @@ export const TransactionModel = sequelize.define("Transaction", {
     description: { type: DataTypes.STRING },
     date: { type: DataTypes.DATEONLY, allowNull: false },
     categoryId: { type: DataTypes.INTEGER, allowNull: false },
-    userId: { type: DataTypes.STRING, allowNull: false }
+    userId: { type: DataTypes.STRING, allowNull: false },
+    walletId: { type: DataTypes.INTEGER, allowNull: true },
+    isPrivate: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true }
 }, { timestamps: true });
+
+TransactionModel.belongsTo(WalletModel, { foreignKey: "walletId", onDelete: "RESTRICT", onUpdate: "CASCADE" });
 
 export default class TransactionMySQLRepository {
     async save(txEntity) {
@@ -28,7 +33,9 @@ export default class TransactionMySQLRepository {
             description: txEntity.description,
             date: txEntity.date,
             categoryId: txEntity.categoryId,
-            userId: txEntity.userId
+            userId: txEntity.userId,
+            walletId: txEntity.walletId ?? null,
+            isPrivate: txEntity.isPrivate ?? true
         });
         return tx.toJSON();
     }

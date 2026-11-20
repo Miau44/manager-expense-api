@@ -4,7 +4,7 @@ export default class TransactionController {
     }
 
     createTransaction = async (req, res) => {
-        const data = { ...req.body, userId: req.user.id };
+        const data = { ...req.body, isPrivate: req.body.isPrivate ?? true, userId: req.user.id };
         try {
             const transaction = await this.transactionService.createTransaction(data);
             res.status(201).json(transaction);
@@ -20,6 +20,11 @@ export default class TransactionController {
         } catch (error) {
             res.status(404).json({ error: error.message });
         }
+    };
+
+    getPublicReceipt = async (req, res) => {
+        try { res.status(200).json(await this.transactionService.getPublicReceipt(req.params.id)); }
+        catch (error) { res.status(error.message === "Transaction not found" ? 404 : 403).json({ error: error.message }); }
     };
 
     updateTransaction = async (req, res) => {

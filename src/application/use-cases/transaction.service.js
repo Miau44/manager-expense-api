@@ -2,12 +2,13 @@ import TransactionEntity from "../../domain/entities/transaction.entity.js";
 import AuditEntity from "../../domain/entities/audit.entity.js";
 
 export default class TransactionService {
-    constructor(transactionRepository, currencyRepository, categoryRepository, budgetRepository = null, auditRepository = null) {
+    constructor(transactionRepository, currencyRepository, categoryRepository, budgetRepository = null, auditRepository = null, walletRepository = null) {
         this.transactionRepository = transactionRepository;
         this.currencyRepository = currencyRepository;
         this.categoryRepository = categoryRepository;
         this.budgetRepository = budgetRepository;
         this.auditRepository = auditRepository;
+        this.walletRepository = walletRepository;
     }
 
     async createTransaction(data) {
@@ -17,6 +18,7 @@ export default class TransactionService {
         if (Number(data.amount) <= 0) {
             throw new Error("Amount must be greater than zero");
         }
+        if (data.isPrivate !== undefined && typeof data.isPrivate !== "boolean") throw new Error("isPrivate must be boolean");
 
         const category = await this.categoryRepository.findById(data.categoryId);
         if (!category) {
@@ -24,6 +26,10 @@ export default class TransactionService {
         }
         if (category.type !== data.type) {
             throw new Error(`Category type mismatch: category is ${category.type}`);
+        }
+        if (data.walletId !== undefined && data.walletId !== null && data.walletId !== "") {
+            const wallet = await this.walletRepository?.findById(data.walletId);
+            if (!wallet || String(wallet.userId) !== String(data.userId)) throw new Error("Wallet not found or does not belong to the user");
         }
 
         const txDate = data.date || new Date().toISOString().split("T")[0];
@@ -90,12 +96,30 @@ export default class TransactionService {
         return await this.transactionRepository.findByUserId(userId);
     }
 
+    async getPublicReceipt(id) {
+        const transaction = await this.transactionRepository.findById(id);
+        if (!transaction) throw new Error("Transaction not found");
+        if (transaction.isPrivate !== false) throw new Error("Receipt is private");
+        return {
+            id: transaction.id, type: transaction.type, amount: transaction.amount,
+            currency: transaction.currency, convertedAmount: transaction.convertedAmount,
+            description: transaction.description, date: transaction.date,
+            categoryId: transaction.categoryId, walletId: transaction.walletId ?? null
+        };
+    }
+
     async updateTransaction(id, data, userId) {
         const existing = await this.transactionRepository.findById(id);
         if (!existing) throw new Error("Transaction not found");
         if (existing.userId !== userId) {
             throw new Error("Unauthorized: You can only update your own transactions");
         }
+
+        if (Object.hasOwn(data, "walletId") && data.walletId !== null && data.walletId !== "") {
+            const wallet = await this.walletRepository?.findById(data.walletId);
+            if (!wallet || String(wallet.userId) !== String(userId)) throw new Error("Wallet not found or does not belong to the user");
+        }
+        if (Object.hasOwn(data, "isPrivate") && typeof data.isPrivate !== "boolean") throw new Error("isPrivate must be boolean");
 
         const txDate = data.date || existing.date;
         const currencyCode = (data.currency || existing.currency).toUpperCase();
